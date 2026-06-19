@@ -36,6 +36,7 @@ from src.hado_movement import (
     MovementResult, classify_hado_movement,
 )
 from src.pose import draw_keypoint_ids, draw_skeleton
+from src.stream_server import MJPEGStreamServer
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -175,6 +176,11 @@ def run(args) -> int:
     frame_idx   = 0
     last_result: MovementResult | None = None
 
+    streamer: MJPEGStreamServer | None = None
+    if args.stream:
+        streamer = MJPEGStreamServer(port=args.stream_port)
+        streamer.start()
+
     print("[MovementDemo] 시작 — 카메라 앞에서 하도 기본동작을 취하세요. ESC로 종료.")
 
     try:
@@ -224,6 +230,9 @@ def run(args) -> int:
             if writer:
                 writer.write(frame)
 
+            if streamer:
+                streamer.push(frame)
+
             if not args.headless:
                 cv2.imshow("HADO Movement Demo", frame)
                 key = cv2.waitKey(1) & 0xFF
@@ -246,6 +255,8 @@ def run(args) -> int:
         if writer:
             writer.release()
             print(f"[MovementDemo] 저장 완료: {args.record}")
+        if streamer:
+            streamer.stop()
         cam.close()
         if not args.headless:
             cv2.destroyAllWindows()
@@ -272,8 +283,13 @@ def main() -> None:
     parser.add_argument("--threaded",   action="store_true", help="스레드 캡처 (Pi4 FPS 향상)")
     parser.add_argument("--show-kp-ids", action="store_true", dest="show_kp_ids",
                         help="키포인트 번호 표시 (발표·디버그용)")
-    parser.add_argument("--no-legend",  action="store_true", dest="no_legend",
+    parser.add_argument("--no-legend",   action="store_true", dest="no_legend",
                         help="우측 동작 범례 숨기기")
+    parser.add_argument("--stream",      action="store_true",
+                        help="MJPEG 웹 스트리밍 활성화 (VNC 없이 브라우저로 시청)")
+    parser.add_argument("--stream-port", type=int, default=8080,
+                        dest="stream_port",
+                        help="스트리밍 서버 포트 (기본 5000)")
     raise SystemExit(run(parser.parse_args()))
 
 
