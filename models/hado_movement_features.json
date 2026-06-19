@@ -1,0 +1,30 @@
+{
+  "feature_names": [
+    "floor_proximity",
+    "bbox_horizontal",
+    "stance_width",
+    "ankle_asym",
+    "knee_raise",
+    "crouch_depth",
+    "knee_asym",
+    "foot_fore_aft",
+    "knee_bend_avg_norm",
+    "knee_bend_diff_norm",
+    "lateral_lean",
+    "hand_low",
+    "nose_level",
+    "shoulder_asym_y",
+    "hip_asym_y",
+    "body_lean_forward"
+  ],
+  "class_names": [
+    "burpee",
+    "lunge",
+    "next_direction",
+    "ready",
+    "slide",
+    "squat",
+    "weaving"
+  ],
+  "n_samples": 397
+}

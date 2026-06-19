@@ -1,0 +1,60 @@
+# HADO 코트 설정
+court:
+  # 실제 코트 규격 (meter)
+  width_m: 10.0      # 가로 (팀 대면 방향, 긴 변) — 각 팀 진영 5m
+  height_m: 6.0      # 세로 (좌우 방향, 짧은 변)
+  # 참고: 높이(z축) 2.66m는 물리적 천장 경계이며 2D 추적에는 사용 안 함
+
+  # Bird-eye view 렌더링 크기 (픽셀)
+  # 1m = 80px 비율 → 800 × 480 픽셀
+  render_scale_px_per_m: 80
+
+  # 시각화 색상 (BGR)
+  bg_color: [40, 50, 35]         # 진녹색 (HADO 코트 분위기)
+  line_color: [255, 255, 255]    # 흰 라인
+  center_line_color: [180, 180, 60]
+
+camera:
+  # 입력 해상도
+  width: 1280
+  height: 720
+  fps: 30
+
+detector:
+  # YOLOv8 모델 (yolov8n.pt / yolov8s.pt / yolov8n_hado.pt)
+  model_path: "yolov8n.pt"
+  # 추론 입력 크기 (작을수록 빠름, 정확도 trade-off)
+  imgsz: 320
+  # 신뢰도 임계값
+  conf_threshold: 0.35
+  # NMS IoU 임계값
+  iou_threshold: 0.5
+  # person class id (COCO)
+  target_class: 0
+
+tracker:
+  # 다중 ID 추적 파라미터
+  max_lost_frames: 15      # 이만큼 감지 안되면 ID 삭제
+  iou_threshold: 0.3       # 같은 사람으로 판단할 IoU 임계값
+
+visualization:
+  trajectory_length: 30    # 궤적 표시할 최근 프레임 수
+  player_radius_px: 12
+  show_id: true
+  show_fps: true
+
+tactic:
+  # R1 Spacing: 팀원간 이 거리 이내면 분산 권고 (m) — 10×6 코트 기준
+  spacing_min_m: 1.5
+  # R3 Counter: 이 거리 이내 정면 적이 있으면 측면 회피 (m)
+  counter_range_m: 3.0
+  # R3 Counter: 정면으로 인정할 y축 오프셋 (m)
+  counter_y_offset_m: 1.0
+  # R4 Gap Attack: 적 사이 공간이 이 이상이면 공격 전진 (m)
+  gap_min_m: 2.5
+  # R5 Backline: 적이 자기 진영에 이 깊이 이상 침투 시 후퇴 (m)
+  backline_depth_m: 2.0
+  # R2 Coverage: 팀 y축 분산이 이 미만이면 커버 권고 (m)
+  coverage_spread_min_m: 1.5
+  # R6 Lane Cover: 적의 이 비율 이상이 같은 레인에 집중 시 커버 지시 (0~1)
+  lane_concentration_ratio: 0.60

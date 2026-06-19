@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# 가상환경
+hado_venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# 테스트 캐시
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 대용량 이미지/데이터셋 (GitHub 용량 초과)
+data/reference_actions/raw_jpg/
+data/yolo_cls_dataset/
+
+# 학습용 임시 파일
+*.pt.bak
+runs/
+
+# 내부 문서
+docs/
+
+# IDE
+.vscode/
+.idea/
