@@ -48,9 +48,8 @@ sudo apt-get install -y -q \
     libopenblas-dev \
     libgl1 \
     fonts-nanum \
-    espeak-ng \
-    || sudo apt-get install -y -q python3-pip python3-venv fonts-nanum espeak-ng
-ok "시스템 패키지 완료 (한글 폰트: fonts-nanum, TTS: espeak-ng)"
+    || sudo apt-get install -y -q python3-pip python3-venv fonts-nanum
+ok "시스템 패키지 완료 (한글 폰트: fonts-nanum)"
 
 # ── 3. 가상환경 ───────────────────────────────────────────────
 echo ""
