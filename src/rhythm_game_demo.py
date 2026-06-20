@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import sys
 import time
 from pathlib import Path
 
@@ -32,14 +33,41 @@ from src.pose import draw_skeleton
 from src.rhythm_game import GameConfig, Phase, RhythmGame
 from src.rhythm_game_ui import draw_hud, draw_intro, draw_results
 from src.stream_server import MJPEGStreamServer
+from src import tts as _tts
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+_MOVEMENT_KO = {
+    "squat": "스쿼트", "lunge": "런지", "back_lunge": "백런지",
+    "slide": "슬라이드", "next_direction": "넥스트",
+    "weaving": "위빙", "burpee": "버피", "ready": "준비",
+}
+_PHASE_KO = {
+    "idle": "대기중", "preparing": "준비", "playing": "플레이",
+    "flash": "성공!", "cooldown": "대기", "ended": "종료",
+}
 
 
 def _largest_det(dets):
     if not dets:
         return None
     return max(dets, key=lambda d: d.area)
+
+
+def _print_status(state, fps: float) -> None:
+    """SSH 터미널에 게임 상태를 한 줄로 출력 (carriage return으로 덮어쓰기)."""
+    phase = _PHASE_KO.get(state.phase.value, state.phase.value)
+    target = _MOVEMENT_KO.get(state.target, state.target or "--")
+    filled = int(state.hold_progress * 8)
+    bars = "█" * filled + "░" * (8 - filled)
+    recognized = _MOVEMENT_KO.get(state.last_recognized, state.last_recognized or "--")
+    line = (
+        f"\r\033[K[{phase}] 타겟:{target:6s} 점수:{state.score:3d} "
+        f"시간:{state.time_left:5.1f}s Hold:[{bars}] "
+        f"인식:{recognized:6s} FPS:{fps:4.0f}"
+    )
+    sys.stdout.write(line)
+    sys.stdout.flush()
 
 
 def run(args) -> int:
@@ -110,7 +138,14 @@ def run(args) -> int:
     last_t = time.time()
     frame_idx = 0
 
+    _prev_target: str | None = None
+    _prev_phase:  Phase | None = None
+
     print("[RhythmGame] SPACE=시작  R=재시작  ESC=종료")
+    if args.headless:
+        print("[RhythmGame] 헤드리스 모드 — 터미널 상태 표시 활성화")
+        if args.stream:
+            print("[RhythmGame] 웹 상태 페이지: 위 URL에서 / 접속 (카메라 불필요)")
     try:
         while True:
             ok, frame = cam.read()
@@ -135,6 +170,20 @@ def run(args) -> int:
             # 게임 진행
             state = game.update(recognized, confidence)
 
+            # ── 이벤트 감지 → TTS ───────────────────────────────
+            if state.phase != _prev_phase:
+                if state.phase == Phase.SUCCESS_FLASH:
+                    _tts.speak_success()
+                elif state.phase == Phase.ENDED:
+                    print()  # 터미널 상태 줄 아래로
+                    _tts.speak_game_over(state.score)
+            if (state.target != _prev_target
+                    and state.target is not None
+                    and state.phase in (Phase.PREPARING, Phase.PLAYING)):
+                _tts.speak_target(state.target)
+            _prev_phase  = state.phase
+            _prev_target = state.target
+
             # HUD
             if state.phase == Phase.IDLE:
                 draw_intro(frame, level.value, cfg.duration_sec)
@@ -143,6 +192,23 @@ def run(args) -> int:
                 draw_results(frame, summary)
             else:
                 draw_hud(frame, state, fps)
+
+            # ── 터미널 상태 줄 (헤드리스 모드) ───────────────────
+            if args.headless and frame_idx % 3 == 0:
+                _print_status(state, fps)
+
+            # ── 웹 상태 페이지 ───────────────────────────────────
+            if streamer:
+                streamer.push_status({
+                    "phase":          state.phase.value,
+                    "target":         state.target,
+                    "score":          state.score,
+                    "time_left":      round(state.time_left, 1),
+                    "hold_progress":  round(state.hold_progress, 3),
+                    "prep_progress":  round(state.prep_progress, 3),
+                    "last_recognized": state.last_recognized,
+                    "fps":            round(fps, 1),
+                })
 
             # 녹화
             if args.record:
