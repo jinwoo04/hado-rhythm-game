@@ -41,13 +41,14 @@ ok "코드 최신화 (main 브랜치)"
 echo ""
 echo "[2] 시스템 패키지 (sudo 필요)"
 sudo apt-get update -q
+# libatlas-base-dev 는 Trixie 에서 제거됨 → libopenblas-dev 로 대체
 sudo apt-get install -y -q \
     python3-pip \
     python3-venv \
     libopenblas-dev \
-    libatlas-base-dev \
     libgl1 \
-    fonts-nanum
+    fonts-nanum \
+    || sudo apt-get install -y -q python3-pip python3-venv fonts-nanum
 ok "시스템 패키지 완료 (한글 폰트: fonts-nanum)"
 
 # ── 3. 가상환경 ───────────────────────────────────────────────
