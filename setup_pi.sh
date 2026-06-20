@@ -65,15 +65,17 @@ source "$VENV_DIR/bin/activate"
 # ── 4. Python 패키지 ──────────────────────────────────────────
 echo ""
 echo "[4] Python 패키지 설치 (시간이 걸릴 수 있음)"
-pip install --upgrade pip -q
-pip install \
-    numpy \
-    opencv-python-headless \
-    "scikit-learn>=1.3.0" \
-    "Pillow>=10.0.0" \
-    pyyaml \
-    -q
-pip install "ultralytics>=8.2.0" -q
+PIP="pip install --timeout 120 --retries 5"
+
+$PIP --upgrade pip
+
+# 핵심 패키지 개별 설치 (연결 불안정 대비)
+$PIP numpy
+$PIP opencv-python-headless
+$PIP "scikit-learn>=1.3.0"
+$PIP "Pillow>=10.0.0"
+$PIP pyyaml
+$PIP "ultralytics>=8.2.0"
 ok "Python 패키지 설치 완료"
 
 # ── 5. 모델 파일 확인 ─────────────────────────────────────────
